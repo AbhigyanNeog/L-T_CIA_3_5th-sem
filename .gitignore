@@ -1,0 +1,42 @@
+# Node.js Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Environment Variables & Secrets
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+*.key
+*.cert
+secrets/
+
+# Runtime Data, Logs & PIDs
+logs/
+*.log
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Test Coverage & Temp Scratch Scripts
+coverage/
+scratch/
+.nyc_output/
+
+# Operating System Files
+.DS_Store
+Thumbs.db
+ehthumbs.db
+
+# IDE & Editor Directories
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
