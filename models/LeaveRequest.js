@@ -6,7 +6,6 @@ const leaveRequestSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       required: [true, 'Employee reference is required'],
-      alias: 'employee',
       index: true
     },
     type: {
@@ -54,7 +53,6 @@ const leaveRequestSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       default: null,
-      alias: 'reviewedBy',
       index: true
     },
     remarks: {
@@ -71,9 +69,32 @@ const leaveRequestSchema = new mongoose.Schema(
   {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toObject: { virtuals: true },
+    strictPopulate: false
   }
 );
+
+// Virtual Populates for references
+leaveRequestSchema.virtual('employee', {
+  ref: 'User',
+  localField: 'employeeId',
+  foreignField: '_id',
+  justOne: true
+});
+
+leaveRequestSchema.virtual('reviewedBy', {
+  ref: 'User',
+  localField: 'approverId',
+  foreignField: '_id',
+  justOne: true
+});
+
+leaveRequestSchema.virtual('approver', {
+  ref: 'User',
+  localField: 'approverId',
+  foreignField: '_id',
+  justOne: true
+});
 
 // Compound index for efficient overlap detection and manager queries
 leaveRequestSchema.index({ employeeId: 1, status: 1, fromDate: 1, toDate: 1 });

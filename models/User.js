@@ -49,21 +49,18 @@ const userSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Department',
       default: null,
-      alias: 'department',
       index: true
     },
     managerId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User',
       default: null,
-      alias: 'reportsTo',
       index: true
     },
     designationId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Designation',
       default: null,
-      alias: 'designation',
       index: true
     },
     joiningDate: {
@@ -108,6 +105,35 @@ const userSchema = new mongoose.Schema(
     toObject: { virtuals: true }
   }
 );
+
+// Virtual Populates for references
+userSchema.virtual('department', {
+  ref: 'Department',
+  localField: 'departmentId',
+  foreignField: '_id',
+  justOne: true
+});
+
+userSchema.virtual('designation', {
+  ref: 'Designation',
+  localField: 'designationId',
+  foreignField: '_id',
+  justOne: true
+});
+
+userSchema.virtual('reportsTo', {
+  ref: 'User',
+  localField: 'managerId',
+  foreignField: '_id',
+  justOne: true
+});
+
+userSchema.virtual('manager', {
+  ref: 'User',
+  localField: 'managerId',
+  foreignField: '_id',
+  justOne: true
+});
 
 // Virtual split for firstName & lastName if needed by legacy callers
 userSchema.virtual('firstName').get(function () {

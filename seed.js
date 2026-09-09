@@ -53,7 +53,7 @@ const seedData = async () => {
       ]);
 
     console.log('[Seed] 3. Seeding Leave Types...');
-    const [ltCL, ltSL, ltEL, ltLOP] = await LeaveType.create([
+    await LeaveType.create([
       { name: 'Casual Leave', code: 'CL', description: 'Personal time off for urgent matters', annualQuota: 12, isPaid: true },
       { name: 'Sick Leave', code: 'SL', description: 'Medical recovery and health emergencies', annualQuota: 10, isPaid: true },
       { name: 'Earned Leave', code: 'EL', description: 'Annual paid vacation days', annualQuota: 15, isPaid: true, isCarryForward: true },
@@ -73,11 +73,9 @@ const seedData = async () => {
     ]);
 
     console.log('[Seed] 5. Seeding Employees (HR Admin, Managers, Staff)...');
-    // HR Admin
     const adminUser = await User.create({
       employeeId: 'EMP-0001',
-      firstName: 'Sarah',
-      lastName: 'Jenkins',
+      name: 'Sarah Jenkins',
       email: 'admin@apexcorp.com',
       password: 'Admin@123456',
       role: 'hr_admin',
@@ -88,11 +86,9 @@ const seedData = async () => {
       status: 'active'
     });
 
-    // Tech Manager
     const techManager = await User.create({
       employeeId: 'EMP-0002',
-      firstName: 'David',
-      lastName: 'Chen',
+      name: 'David Chen',
       email: 'manager.tech@apexcorp.com',
       password: 'Manager@123456',
       role: 'manager',
@@ -104,11 +100,9 @@ const seedData = async () => {
       status: 'active'
     });
 
-    // Sales Manager
     const salesManager = await User.create({
       employeeId: 'EMP-0003',
-      firstName: 'Marcus',
-      lastName: 'Vance',
+      name: 'Marcus Vance',
       email: 'manager.sales@apexcorp.com',
       password: 'Manager@123456',
       role: 'manager',
@@ -120,17 +114,14 @@ const seedData = async () => {
       status: 'active'
     });
 
-    // Set HODs for departments
     deptHR.headOfDepartment = adminUser._id;
     deptEng.headOfDepartment = techManager._id;
     deptSales.headOfDepartment = salesManager._id;
     await Promise.all([deptHR.save(), deptEng.save(), deptSales.save()]);
 
-    // Employees
     const empAlex = await User.create({
       employeeId: 'EMP-1001',
-      firstName: 'Alex',
-      lastName: 'Morgan',
+      name: 'Alex Morgan',
       email: 'alex.morgan@apexcorp.com',
       password: 'Emp@123456',
       role: 'employee',
@@ -144,8 +135,7 @@ const seedData = async () => {
 
     const empEmma = await User.create({
       employeeId: 'EMP-1002',
-      firstName: 'Emma',
-      lastName: 'Watson',
+      name: 'Emma Watson',
       email: 'emma.watson@apexcorp.com',
       password: 'Emp@123456',
       role: 'employee',
@@ -159,8 +149,7 @@ const seedData = async () => {
 
     const empLiam = await User.create({
       employeeId: 'EMP-1003',
-      firstName: 'Liam',
-      lastName: 'Neeson',
+      name: 'Liam Neeson',
       email: 'liam.neeson@apexcorp.com',
       password: 'Emp@123456',
       role: 'employee',
@@ -176,17 +165,13 @@ const seedData = async () => {
 
     console.log('[Seed] 6. Seeding Leave Balances...');
     for (const u of allUsers) {
-      for (const lt of [ltCL, ltSL, ltEL, ltLOP]) {
-        await LeaveBalance.create({
-          employee: u._id,
-          leaveType: lt._id,
-          year: currentYear,
-          allocatedDays: lt.annualQuota,
-          usedDays: lt.code === 'CL' ? 2 : 0,
-          pendingDays: 0,
-          remainingDays: lt.code === 'CL' ? lt.annualQuota - 2 : lt.annualQuota
-        });
-      }
+      await LeaveBalance.create({
+        employeeId: u._id,
+        year: currentYear,
+        casual: { allocated: 12, used: 2, remaining: 10 },
+        sick: { allocated: 10, used: 0, remaining: 10 },
+        earned: { allocated: 15, used: 0, remaining: 15 }
+      });
     }
 
     console.log('[Seed] 7. Seeding Attendance Records...');
@@ -197,20 +182,20 @@ const seedData = async () => {
       const d = new Date(today);
       d.setUTCDate(today.getUTCDate() - i);
       const dayOfWeek = d.getUTCDay();
-      if (dayOfWeek === 0 || dayOfWeek === 6) continue; // Skip weekends
+      if (dayOfWeek === 0 || dayOfWeek === 6) continue;
 
       for (const u of [empAlex, empEmma, techManager]) {
         const clockInTime = new Date(d);
-        clockInTime.setUTCHours(3, 45, 0, 0); // 09:15 AM local
+        clockInTime.setUTCHours(3, 45, 0, 0);
 
         const clockOutTime = new Date(d);
-        clockOutTime.setUTCHours(12, 15, 0, 0); // 05:45 PM local
+        clockOutTime.setUTCHours(12, 15, 0, 0);
 
         await Attendance.create({
-          employee: u._id,
+          employeeId: u._id,
           date: d,
           clockIn: clockInTime,
-          clockOut: i === 0 ? null : clockOutTime, // Today still active
+          clockOut: i === 0 ? null : clockOutTime,
           totalHours: i === 0 ? 0 : 8.5,
           status: 'PRESENT',
           notes: 'Standard work day'
@@ -226,8 +211,8 @@ const seedData = async () => {
 
     await LeaveRequest.create([
       {
-        employee: empAlex._id,
-        leaveType: ltCL._id,
+        employeeId: empAlex._id,
+        type: 'CASUAL',
         startDate: leaveStart,
         endDate: leaveEnd,
         totalDays: 2,
@@ -235,14 +220,14 @@ const seedData = async () => {
         status: 'PENDING'
       },
       {
-        employee: empEmma._id,
-        leaveType: ltSL._id,
+        employeeId: empEmma._id,
+        type: 'SICK',
         startDate: new Date(Date.UTC(currentYear, 1, 10)),
         endDate: new Date(Date.UTC(currentYear, 1, 11)),
         totalDays: 2,
         reason: 'Viral fever and physician appointment',
         status: 'APPROVED',
-        reviewedBy: techManager._id,
+        approverId: techManager._id,
         reviewedAt: new Date(),
         reviewRemarks: 'Approved. Take care.'
       }
@@ -251,7 +236,7 @@ const seedData = async () => {
     console.log('[Seed] 9. Seeding Sample Payslips...');
     await Payslip.create([
       {
-        employee: empAlex._id,
+        employeeId: empAlex._id,
         payPeriodMonth: 1,
         payPeriodYear: currentYear,
         baseSalarySnapshot: empAlex.baseSalary,
@@ -272,8 +257,8 @@ const seedData = async () => {
     console.log('[Seed] 10. Seeding Performance Notes...');
     await PerformanceNote.create([
       {
-        employee: empAlex._id,
-        author: techManager._id,
+        employeeId: empAlex._id,
+        authorId: techManager._id,
         category: 'Quarterly Review',
         rating: 5,
         title: 'Outstanding Delivery on Backend Services',
@@ -281,8 +266,8 @@ const seedData = async () => {
         isSharedWithEmployee: true
       },
       {
-        employee: empEmma._id,
-        author: techManager._id,
+        employeeId: empEmma._id,
+        authorId: techManager._id,
         category: '1-on-1',
         rating: 4,
         title: 'Solid Progress on API Integrations',

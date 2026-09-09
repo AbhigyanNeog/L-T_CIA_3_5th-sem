@@ -15,9 +15,9 @@ const login = asyncHandler(async (req, res, next) => {
     return next(new AppError('Please provide both email and password.', 400));
   }
 
-  // Find user by email and explicitly select password hash
+  // Find user by email and explicitly select passwordHash
   const user = await User.findOne({ email: email.toLowerCase() })
-    .select('+password')
+    .select('+passwordHash')
     .populate('department', 'name code')
     .populate('designation', 'title level');
 
@@ -34,8 +34,8 @@ const login = asyncHandler(async (req, res, next) => {
   // Generate JWT access token
   const token = user.generateAuthToken();
 
-  // Exclude password from response payload
-  user.password = undefined;
+  // Exclude passwordHash from response payload
+  user.passwordHash = undefined;
 
   return ApiResponse.success(res, 200, 'Authentication successful.', {
     token,
@@ -75,14 +75,14 @@ const changePassword = asyncHandler(async (req, res, next) => {
     return next(new AppError('New password must be at least 6 characters long.', 400));
   }
 
-  const user = await User.findById(req.user._id).select('+password');
+  const user = await User.findById(req.user._id).select('+passwordHash');
 
   if (!(await user.comparePassword(currentPassword))) {
     return next(new AppError('Current password is incorrect.', 401));
   }
 
   // Set new password (pre-save hook will hash it)
-  user.password = newPassword;
+  user.passwordHash = newPassword;
   await user.save();
 
   return ApiResponse.success(res, 200, 'Password updated successfully. Please use your new password next time you log in.');

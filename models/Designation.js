@@ -5,56 +5,34 @@ const designationSchema = new mongoose.Schema(
     title: {
       type: String,
       required: [true, 'Designation title is required'],
-      unique: true,
-      trim: true,
-      maxlength: [100, 'Designation title cannot exceed 100 characters'],
-      index: true
+      trim: true
     },
-    departmentId: {
+    department: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Department',
       required: [true, 'Department reference is required'],
-      alias: 'department',
       index: true
     },
     level: {
       type: Number,
-      default: 1,
-      min: [1, 'Hierarchy level must be at least 1'],
-      max: [10, 'Hierarchy level cannot exceed 10'],
-      index: true
+      required: [true, 'Designation level is required'],
+      min: 1,
+      max: 10
     },
     minSalary: {
       type: Number,
-      default: 0,
-      min: [0, 'Minimum salary cannot be negative']
+      default: 0
     },
     maxSalary: {
       type: Number,
-      default: 0,
-      validate: {
-        validator: function (value) {
-          return value >= this.minSalary;
-        },
-        message: 'Maximum salary must be greater than or equal to minimum salary'
-      }
-    },
-    description: {
-      type: String,
-      trim: true,
-      maxlength: [500, 'Description cannot exceed 500 characters'],
-      default: ''
-    },
-    isActive: {
-      type: Boolean,
-      default: true,
-      index: true
+      default: 0
     }
   },
   {
     timestamps: true,
     toJSON: { virtuals: true },
-    toObject: { virtuals: true }
+    toObject: { virtuals: true },
+    strictPopulate: false
   }
 );
 
